@@ -1,46 +1,44 @@
 from app import db
 from app.models.book import Book
-from flask import Blueprint, jsonify, make_response, request
-
-# class Book:
-#     def __init__(self, id, title, description):
-#         self.id = id
-#         self.title = title
-#         self.description = description
-
-# books = [
-#     Book(1, "Dune", "A fantasy novel set in an imaginary world."),
-#     Book(2, "IQ84", "A dystopian scifi novel"),
-#     Book(3, "The Great Train Robbery", "Historical Fiction novel"),
-# ]
+from flask import Blueprint, jsonify, make_response, request, abort
 
 books_bp = Blueprint("books", __name__, url_prefix="/books")
 
 @books_bp.route("", methods=["GET","POST"])
 def handle_books():
     if request.method == "GET":
-        books = Book.query.all()
+
+        title_query = request.args.get("title")
+        id_query = request.args.get("id")
+
+        book_query = Book.query
+
+        if title_query:
+            book_query = book_query.filter_by(title=title_query)
+        if id_query:
+            book_query = book_query.filter_by(id=id_query)
+            
+        books = book_query.all() # reflects updated query
+
         books_response = []
-        for book in books:
-            books_response.append({
-                "id" : book.id,
-                "title" : book.title,
-                "description": book.description
-            })
+
+        books_response.append([book.to_dict() for book in books]) # added list compr. and to_dict
         return jsonify(books_response)
+
     elif request.method == "POST": 
         request_body = request.get_json()
-        new_book = Book(title=request_body["title"], description=request_body["description"])
+        new_book = Book.from_dict(request_body) # passes book as cls, request_body as data_dict
         
         db.session.add(new_book)
         db.session.commit()
 
         return make_response(f"Book {new_book.title} successfully created", 201)
 
-# @books_bp.route("/<id>", methods=["GET"])
-# def handle_book():
-#     if request.method == "GET":
-#         book = Book.query.get
+@books_bp.route("/<id>", methods=["GET"])
+def get_book(id):
+    if request.method == "GET":
+        book = Book.query.get(id)
+        return jsonify(book.to_dict())
 
 # @books_bp.route("", methods=["GET"])
 # def handle_books():
@@ -60,42 +58,13 @@ def handle_books():
 #         "title" : book.title, 
 #         "description" : book.description})
 
-# def validate_book(book_id):
-#     try:
-#         book_id = int(book_id)
-#     except:
-#         abort(make_response({"message":f"book {book_id} invalid"}, 400))
+def validate_model(cls, model_id):
+    try:
+        model_id = int(model_id)
+    except:
+        abort(make_response({"message":f"book {model_id} invalid"}, 400))
     
-#     for book in books:
-#         if book.id == book_id:
-#             return book
+    model = cls.query.get(model_id)
+    if not model:
+        abort(make_response({"message":f"book {model_id} not found"}, 404))
 
-#     abort(make_response({"message":f"book {book_id} not found"}, 404))
-
-
-
-# hello_world_bp = Blueprint("hello_world", __name__, url_prefix="/hello-world")
-
-# @hello_world_bp.route("", methods=["GET"])
-# def handle_hello_world():
-#     my_beautiful_response_body = "Hello, World!"
-#     return my_beautiful_response_body
-
-# @hello_world_bp.route("/JSON", methods=["GET"])
-# def say_hello_json():
-#     return {
-#   "name": "Ada Lovelace",
-#   "message": "Hello!",
-#   "hobbies": ["Fishing", "Swimming", "Watching Reality Shows"]
-#     }
-
-# @hello_world_bp.route("/broken-endpoint-with-broken-server-code")
-# def broken_endpoint():
-#     response_body = {
-#         "name": "Ada Lovelace",
-#         "message": "Hello!",
-#         "hobbies": ["Fishing", "Swimming", "Watching Reality Shows"]
-#     }
-#     new_hobby = "Surfing"
-#     response_body["hobbies"].append(new_hobby)
-#     return response_body
