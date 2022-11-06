@@ -1,8 +1,8 @@
-"""adds Book model
+"""add model tables
 
-Revision ID: 8edc22ecd732
+Revision ID: c57293d7f81f
 Revises: 
-Create Date: 2022-10-28 09:58:03.380657
+Create Date: 2022-11-04 10:56:26.186107
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '8edc22ecd732'
+revision = 'c57293d7f81f'
 down_revision = None
 branch_labels = None
 depends_on = None
