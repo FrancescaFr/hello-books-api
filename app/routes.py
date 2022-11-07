@@ -11,7 +11,7 @@ def handle_books():
         books_response = [book.to_dict() for book in books]
         return jsonify(books_response)
     elif request.method == "POST": 
-        request_body = request.get_json()
+        request_body = request.get_json()  # type: ignore
         new_book = Book(title=request_body["title"], 
                         description=request_body["description"])
 
